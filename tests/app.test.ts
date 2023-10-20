@@ -1,8 +1,6 @@
 import request from 'supertest';
 import app from '../src/app';
 
-let port = process.env.TEST_APP_PORT || 3001;
-
 describe('Express App', () => {
   it('responds with "Hello World" at the root endpoint', async () => {
     const response = await request(app).get('/');

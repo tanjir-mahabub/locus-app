@@ -1,9 +1,26 @@
-import * as pgPromise from 'pg-promise';
+import pgPromise from 'pg-promise';
 
-// Create a new instance of the pg-promise library
+type DBConnectionType = () => any;
+
+/**
+ * pg-promise instance
+ */
 const pgp = pgPromise();
 
-// Set up a database connection
-const db = pgp('your-database-connection-string-here');
+/**
+ * Database Connection Initialize
+ * 
+ * @returns any
+ */
+export const DBConnection: DBConnectionType = async () => {
 
-export default db;
+    const DB_STRING = process.env.DB_CONNECTION_STRING;
+
+    if (!DB_STRING) return false;
+
+    // DB string connection
+    const db = pgp(DB_STRING);
+
+    return db;
+}
+
