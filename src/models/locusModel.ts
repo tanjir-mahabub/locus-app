@@ -5,6 +5,10 @@ interface LocusData {
     assembly_id?: string;
     region_id?: string;
     membership_status?: string;
+    sideload?: 'locusMembers' | 'none';
+    page?: string;
+    perPage?: string;
+    sort?: string;
 }
 
 const getLocusData = async (queryParams: LocusData) => {
@@ -20,7 +24,14 @@ const getLocusData = async (queryParams: LocusData) => {
     const queryParameters = [];
 
     /**
-     * Query Paramsmeter Logic
+     * Pagination and Sorting Variables
+     */
+    const page = queryParams.page ? parseInt(queryParams.page, 10) : 1;
+    const perPage = queryParams.perPage ? parseInt(queryParams.perPage, 10) : 1000;
+    const sort = queryParams.sort;
+
+    /**
+     * Query Parameter Logic
      */
     if (queryParams.id) {
         queryConditions.push('rl.id = $1');
@@ -30,7 +41,6 @@ const getLocusData = async (queryParams: LocusData) => {
     if (queryParams.assembly_id) {
         queryConditions.push('rl.assembly_id = $' + (queryParameters.length + 1));
         queryParameters.push(queryParams.assembly_id);
-        console.log(queryParameters);
     }
 
     if (queryParams.region_id) {
@@ -51,8 +61,38 @@ const getLocusData = async (queryParams: LocusData) => {
     /**
      * SQL Schema
      */
-    const sql = `SELECT rl.*, rlm.* FROM rnc_locus rl
-        LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id ${whereClause} LIMIT $${queryParameters.length + 1}`;
+
+    /**
+     * without Sideload Parameter
+     */
+    // let sql = `SELECT rl.*, rlm.* FROM rnc_locus rl
+    //     LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id ${whereClause}`;
+
+    /**
+     * with Sideload Parameter
+     */
+    let sql = `
+        SELECT rl.*${queryParams.sideload === 'locusMembers' ? ', rlm.*' : ''}
+        FROM rnc_locus rl
+        ${queryParams.sideload === 'locusMembers' ? 'LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id' : ''}
+        ${whereClause}    
+    `;
+
+    /**
+     * Sorting by column_name
+     */
+    if (sort) {
+        sql += ` ORDER BY ${sort}`;
+    }
+
+    /**
+     * Pagination and Offset Logic
+     */
+    const offset = (page - 1) * perPage;
+    sql += ` OFFSET $${queryParameters.length + 1} LIMIT $${queryParameters.length + 2}`
+    queryParameters.push(offset, perPage);
+
+
 
     /**
      * Retrieve data from database
@@ -61,10 +101,10 @@ const getLocusData = async (queryParams: LocusData) => {
         db.connect({ direct: true });
         const data = await db.any(sql, [...queryParameters, 5]);
         db.$pool.end();
-        console.log('data .....................', data, queryParameters, queryConditions);
         return data;
     } catch (error) {
         console.error('Error in getLocusData:', error);
+        db.$pool.end();
         throw error;
     }
 };

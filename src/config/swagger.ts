@@ -12,7 +12,7 @@ const swaggerOptions = {
             description: 'Documentation for Express API with Swagger',
         },
     },
-    apis: ['./src/routes/*.ts'],
+    apis: ['./routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
