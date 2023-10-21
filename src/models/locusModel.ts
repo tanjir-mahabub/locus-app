@@ -5,7 +5,7 @@ interface LocusData {
     assembly_id?: string;
     region_id?: string;
     membership_status?: string;
-    sideload?: 'locusMembers' | 'none';
+    sideLoading?: 'locusMembers' | 'none';
     page?: string;
     perPage?: string;
     sort?: string;
@@ -61,27 +61,23 @@ const getLocusData = async (queryParams: LocusData) => {
     /**
      * SQL Schema
      */
-
-    /**
-     * without Sideload Parameter
-     */
-    // let sql = `SELECT rl.*, rlm.* FROM rnc_locus rl
-    //     LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id ${whereClause}`;
-
-    /**
-     * with Sideload Parameter
-     */
     let sql = `
-        SELECT rl.*${queryParams.sideload === 'locusMembers' ? ', rlm.*' : ''}
+        SELECT rl.*${queryParams.sideLoading === 'locusMembers' ? ', rlm.*' : ''}
         FROM rnc_locus rl
-        ${queryParams.sideload === 'locusMembers' ? 'LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id' : ''}
+        ${queryParams.sideLoading === 'locusMembers' ? 'LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id' : ''}
         ${whereClause}    
     `;
 
     /**
      * Sorting by column_name
      */
-    if (sort) {
+    if (sort == 'asc') {
+        sql += ` ORDER BY rl.id ASC`;
+    }
+    else if (sort == 'desc') {
+        sql += ` ORDER BY rl.id DESC`;
+    }
+    else if (sort) {
         sql += ` ORDER BY ${sort}`;
     }
 
