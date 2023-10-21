@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
-import { DBConnection } from './config/database';
 import router from './routes/locusRoutes';
 
 /**
@@ -16,7 +15,7 @@ let port = process.env.APP_PORT || 3000;
  * Express App Initialize
  */
 const app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 /**
