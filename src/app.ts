@@ -5,9 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger';
 import router from './routes/locusRoutes';
 import jwt from 'jsonwebtoken';
-import { verifyToken, isAdmin, isNormalUser, isLimitedUser } from './middleware/authMiddleware';
 import { users } from './models/userModel';
-import { userConfig } from './config/user';
 
 /**
  * Environment Variable Initialize
@@ -27,26 +25,15 @@ app.use(bodyParser.json());
  * Serve Swagger documentation
  */
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-// app.use('/api', isAdmin, isNormalUser, isLimitedUser, router);
 app.use('/api', router);
 
 app.get('/', (req, res) => {
     res.send("Hello World")
 });
 
-// Define your routes
-app.get('/', (req, res) => {
-    res.send('Hello, Express with JWT authentication!');
-});
-
-// Public route: User registration
-app.post('/register', (req, res) => {
-    // Handle user registration here
-    // ...
-    res.send('User registered successfully');
-});
-
-// Public route: User login
+/**
+ * Protected Login Route
+ */
 app.post('/login', (req, res) => {
     // Extract username and password from the request body
     const { username, password } = req.body;
@@ -66,30 +53,16 @@ app.post('/login', (req, res) => {
 
     if (!secret) return false;
 
-    // Generate a JWT token
+    /**
+     * Generate JWT Token
+     */
     const token = jwt.sign(
         { sub: user.username, username: user.username, role: user.role },
         secret,
         { expiresIn: '1h' }
     );
-    console.log(user, secret);
 
     res.json({ token });
-});
-
-// Protected route: Admin can access
-app.get('/admin', verifyToken, isAdmin, (req, res) => {
-    res.json({ message: 'Admin route accessed' });
-});
-
-// Protected route: Normal user can access
-app.get('/normal', verifyToken, isNormalUser, (req, res) => {
-    res.json({ message: 'Normal user route accessed' });
-});
-
-// Protected route: Limited user can access
-app.get('/limited', verifyToken, isLimitedUser, (req, res) => {
-    res.json({ message: 'Limited user route accessed' });
 });
 
 /**
