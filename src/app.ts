@@ -7,6 +7,10 @@ import router from './routes/locusRoutes';
 import jwt from 'jsonwebtoken';
 import { users } from './models/userModel';
 
+
+import "reflect-metadata"
+import path from 'path';
+
 /**
  * Environment Variable Initialize
  */
@@ -21,6 +25,8 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+app.use(express.static(path.join(__dirname, 'views')));
+
 /**
  * Serve Swagger documentation
  */
@@ -28,7 +34,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', router);
 
 app.get('/', (req, res) => {
-    res.send("Hello World")
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 /**
