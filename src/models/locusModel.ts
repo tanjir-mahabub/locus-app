@@ -5,13 +5,15 @@ interface LocusData {
     assembly_id?: string;
     region_id?: string;
     membership_status?: string;
-    sideLoading?: 'locusMembers' | 'none';
+    sideloading?: 'locusMembers' | 'none';
     page?: string;
     perPage?: string;
     sort?: string;
+    userRole?: string;
 }
 
 const getLocusData = async (queryParams: LocusData) => {
+
     /**
      * Ensure Database Connection
      */
@@ -34,24 +36,94 @@ const getLocusData = async (queryParams: LocusData) => {
      * Query Parameter Logic
      */
     if (queryParams.id) {
+
         queryConditions.push('rl.id = $1');
+
         queryParameters.push(parseInt(queryParams.id, 10));
+
     }
 
     if (queryParams.assembly_id) {
+
         queryConditions.push('rl.assembly_id = $' + (queryParameters.length + 1));
+
         queryParameters.push(queryParams.assembly_id);
+
     }
 
-    if (queryParams.region_id) {
+    if (queryParams.region_id && queryParams.sideloading !== 'none') {
+
         queryConditions.push('rlm.region_id = $' + (queryParameters.length + 1));
+
         queryParameters.push(parseInt(queryParams.region_id, 10));
+
     }
 
-    if (queryParams.membership_status) {
+    if (queryParams.membership_status && queryParams.sideloading !== 'none') {
+
         queryConditions.push('rlm.membership_status = $' + (queryParameters.length + 1));
+
         queryParameters.push(queryParams.membership_status);
+
     }
+
+    /**
+     * Apply data visibility condition based on user's role
+     */
+    if (queryParams.userRole === 'admin') {
+
+        if (!queryParams.sideloading) {
+
+            queryParams.sideloading = 'locusMembers';
+
+        }
+
+    } else if (queryParams.userRole === 'normal') {
+
+        if (queryParams.sideloading !== "locusMembers") {
+
+            queryParams.sideloading = 'none';
+
+        }
+        else {
+
+            console.log('Access denied');
+
+            db.$pool.end();
+
+            return false;
+        }
+
+    } else if (queryParams.userRole === 'limited') {
+
+        const validRegionIds = ['86118093', '86696489', '88186467'];
+
+        if (queryParams.sideloading == "locusMembers") {
+
+            if (queryParams.region_id && !validRegionIds.includes(queryParams.region_id)) {
+
+                console.log('Access denied');
+
+                db.$pool.end();
+
+                return false;
+
+            } else {
+
+                queryConditions.push("rlm.region_id IN ('86118093','86696489','88186467')");
+
+            }
+        }
+        else {
+
+            console.log('Access denied');
+
+            db.$pool.end();
+
+            return false;
+        }
+    }
+
 
     /**
      * Condition on Sql based on Query
@@ -62,9 +134,9 @@ const getLocusData = async (queryParams: LocusData) => {
      * SQL Schema
      */
     let sql = `
-        SELECT rl.*${queryParams.sideLoading === 'locusMembers' ? ', rlm.*' : ''}
+        SELECT rl.*${queryParams.sideloading === 'locusMembers' ? ', rlm.*' : ''}
         FROM rnc_locus rl
-        ${queryParams.sideLoading === 'locusMembers' ? 'LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id' : ''}
+        ${queryParams.sideloading === 'locusMembers' ? 'LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id' : ''}
         ${whereClause}    
     `;
 
@@ -94,13 +166,21 @@ const getLocusData = async (queryParams: LocusData) => {
      * Retrieve data from database
      */
     try {
+
         db.connect({ direct: true });
+
         const data = await db.any(sql, [...queryParameters, 5]);
+
         db.$pool.end();
+
         return data;
+
     } catch (error) {
+
         console.error('Error in getLocusData:', error);
+
         db.$pool.end();
+
         throw error;
     }
 };

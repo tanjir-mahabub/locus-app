@@ -3,7 +3,6 @@ import locusController from "../controllers/locusController";
 
 const router = Router();
 
-
 /**
  * @swagger
  * /api/locus:
@@ -16,18 +15,18 @@ const router = Router();
  *         description: The ID of the Locus. (Optional)
  *         schema:
  *           type: integer
- *           default: 1878843
+ *           default: 157572
  * 
  *       - name: assembly_id
  *         in: query
  *         description: The assembly ID. (Optional)
  *         schema:
  *           type: string
- *           default: 'GRCh38'
+ *           default: 'ASM15162v1'
  * 
- *       - name: sideLoading
+ *       - name: sideloading
  *         in: query
- *         description: The assembly ID. (Optional)
+ *         description: Set sideloading to add rnc_locus_members data loading. (Optional)
  *         schema:
  *           type: string
  *           enum: [locusMembers, none]
@@ -35,10 +34,17 @@ const router = Router();
  *  
  *       - name: region_id
  *         in: query
- *         description: Get locus data by region ID if sideLoading set locusMembers (Optional)
+ *         description: Get locus data by region ID if sideloading set to locusMembers (Optional)
  *         schema:
  *           type: integer
- *           default: 182936 
+ *           default: 41427209 
+ *            
+ *       - name: membership_status
+ *         in: query
+ *         description: Get locus data by membership status if sideloading set to locusMembers (Optional)
+ *         schema:
+ *           type: string
+ *           default: member
  *            
  *       - name: sort
  *         in: query         
@@ -65,82 +71,11 @@ const router = Router();
  *     responses:
  *       '200':
  *         description: Successful response
+ *       '403':
+ *         description: Access denied
  */
 
 
 router.get('/locus', locusController);
 
 export default router;
-
-
-
-// /**
-//  * @swagger
-//  * /api/locus:
-//  *   get:
-//  *   summary: Get Locus Data
-//  *   description: Retrieve Locus data based on query parameters.
-//  *     parameters:
-//  *       - name: id
-//  *         in: query
-//  *         description: The ID of the Locus. (Optional)
-//  *         schema:
-//  *         type: integer
-//  *          default: 1878843
-//  *
-//  *      - name: assembly_id
-//  *        in: query
-//  *        description: The assembly ID. (Optional)
-//  *        schema:
-//  *          type: integer
-//  *          default: 123  # Set your default value here
-//  *
-//  *      - name: region_id
-//  *        in: query
-//  *        description: The region ID. (Optional)
-//  *        schema:
-//  *          type: string
-//  *          default: 'your_default_value'
-//  *
-//  *      - name: membership_status
-//  *        in: query
-//  *        description: The membership status. (Optional)
-//  *        schema:
-//  *          type: string
-//  *          default: 'your_default_value'
-//  *
-//  *       - name: sideLoad
-//  *         in: query
-//  *         description: The sideLoad parameter. (Optional)
-//  *         schema:
-//  *           type: string
-//  *           default: 'none'
-//  *           enum:
-//  *             - 'locusMembers'
-//  *             - 'none'
-//  *
-//  *       - name: page
-//  *         in: query
-//  *         description: The page number for pagination. (Optional)
-//  *         schema:
-//  *           type: integer
-//  *           default: 1
-//  *
-//  *       - name: perPage
-//  *         in: query
-//  *         description: The number of items per page for pagination. (Optional)
-//  *         schema:
-//  *           type: integer
-//  *           default: 1000
-//  *
-//  *       - name: sort
-//  *         in: query
-//  *         description: Sorting options. (Optional)
-//  *         schema:
-//  *           type: string
-//  *           default: 'your_default_sort_field'
-//  *           example: 'field1,field2'  # Example format for sorting
-//  *     responses:
-//  *       '200':
-//  *       description: Successful response
-//  */

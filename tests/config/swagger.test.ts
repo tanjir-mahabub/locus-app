@@ -11,10 +11,25 @@ describe('Swagger Configuration', () => {
             swaggerDefinition: {
                 openapi: '3.0.0',
                 info: {
-                    title: 'Locus API with Swagger',
+                    title: 'Locus Data API',
+                    description: '',
                     version: '1.0.0',
-                    description: 'Documentation for Express API with Swagger',
+                    contact: {
+                        email: 'md.tanjir.mahabub@gmail.com'
+                    }
                 },
+                components: {
+                    securitySchemes: {
+                        bearerAuth: {
+                            type: 'http',
+                            scheme: 'bearer',
+                            bearerFormat: 'JWT',
+                        }
+                    }
+                },
+                security: [{
+                    bearerAuth: []
+                }]
             },
             apis: ['./src/routes/*.ts'],
         });
