@@ -10,6 +10,8 @@ import { users } from './models/userModel';
 
 import "reflect-metadata"
 import path from 'path';
+import AppDataSource from './config/typeORM';
+import { RncLocus } from './entities/rncLocus';
 
 /**
  * Environment Variable Initialize
@@ -24,8 +26,7 @@ const secret = process.env.JWT_SECRET;
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-app.use(express.static(path.join(__dirname, 'views')));
+// app.use(express.static(path.join(__dirname, 'views')));
 
 /**
  * Serve Swagger documentation
@@ -34,7 +35,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', router);
 
 app.get('/', (req, res) => {
+
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
+
 });
 
 /**

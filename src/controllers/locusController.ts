@@ -1,6 +1,7 @@
+// locusController.ts
 import { Request, Response } from 'express';
-import getLocusData from '../models/locusModel';
 import { verifyToken } from '../middleware/authMiddleware';
+import { getLocusData, Permission } from './../models/locusModel';
 
 /**
  * Authenticated Request Interface Definition
@@ -12,15 +13,15 @@ interface AuthenticatedRequest extends Request {
 /**
  * Request Query Interface Definition
  */
-interface RequestQuery {
-    id?: string;
+export interface RequestQuery {
+    id?: number;
     assembly_id?: string;
-    region_id?: string;
+    region_id?: number;
     membership_status?: string;
     sideloading?: 'locusMembers' | 'none';
     page?: string;
     perPage?: string;
-    sort?: string;
+    orderBy?: any;
     userRole?: string;
 }
 
@@ -32,42 +33,59 @@ interface RequestQuery {
  */
 const locusController = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+        // Requested Query Variables
+        const { id, assembly_id, region_id, membership_status, sideloading, page, perPage, orderBy } = await req.query as RequestQuery;
 
-        /**
-         * Requested Query Variables
-         */
-        const { id, assembly_id, region_id, membership_status, sideloading, page, perPage, sort } = req.query as RequestQuery;
-
-        /**
-         * JWT Token Verification
-         */
+        // JWT Token Verification
         verifyToken(req, res, async () => {
-
             const userRole = req.user?.role;
 
-            const data = await getLocusData({
-                id,
-                assembly_id,
-                region_id,
-                membership_status,
-                sideloading,
-                page,
-                perPage,
-                sort,
-                userRole
-            });
+            // Define permissions based on user role
+            const permissions: Permission = {
+                admin: {
+                    canAccessAllColumns: true,
+                    canUseSideloading: true,
+                },
+                normal: {
+                    canAccessAllColumns: false,
+                    canUseSideloading: false,
+                },
+                limited: {
+                    canAccessAllColumns: true,
+                    canUseSideloading: true,
+                    allowedRegionId: [86118093, 86696489, 88186467]
+                },
+            };
 
-            data ? res.json(data) : res.status(403).json({ message: 'Data access denied for this user.' });
+            // Check if user has access based on their role
+            if (userRole) {
 
+                (!permissions[userRole]) && res.status(403).json({ message: 'Access denied' });
+
+
+                // Define filtering, sorting, pagination, and sideloading options
+                const options = {
+                    id,
+                    assembly_id,
+                    region_id,
+                    membership_status,
+                    sideloading,
+                    page,
+                    perPage,
+                    orderBy,
+                    userRole
+                };
+
+                const data = await getLocusData(options, permissions);
+                console.log(data);
+
+                data ? res.json(data) : res.status(403).json({ message: 'Data access denied for this user.' });
+            }
         });
     } catch (error) {
-
         console.error(error);
-
         res.status(500).json({ message: 'Error retrieving locus data' });
-
     }
 };
-
 
 export default locusController;
