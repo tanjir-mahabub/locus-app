@@ -1,188 +1,141 @@
-import { DBConnection } from '../config/database';
+import { In } from 'typeorm';
+import AppDataSource from '../config/typeORM';
+import { RequestQuery } from '../controllers/locusController';
+import { RncLocus } from '../entities/rncLocus';
+import { Permission } from '../config/user';
 
-interface LocusData {
-    id?: string;
-    assembly_id?: string;
-    region_id?: string;
-    membership_status?: string;
-    sideloading?: 'locusMembers' | 'none';
-    page?: string;
-    perPage?: string;
-    sort?: string;
-    userRole?: string;
-}
+/**
+ * Get Locus Data
+ * 
+ * @param queryParams RequestQuery
+ * @param permissions Permission
+ * @returns RncLocus[] | boolean
+ */
+export const getLocusData = async (queryParams: RequestQuery, permissions: Permission) => {
 
-const getLocusData = async (queryParams: LocusData) => {
+    if (AppDataSource.isInitialized) {
 
-    /**
-     * Ensure Database Connection
-     */
-    const db = await DBConnection();
+        try {
 
-    /**
-     * Construct the SQL query based on the provided query parameters
-     */
-    const queryConditions = [];
-    const queryParameters = [];
+            /**
+             * Query Parameters
+             */
+            const { id, assembly_id, region_id, membership_status, sideloading, page, perPage, orderBy, userRole } = await queryParams as RequestQuery;
 
-    /**
-     * Pagination and Sorting Variables
-     */
-    const page = queryParams.page ? parseInt(queryParams.page, 10) : 1;
-    const perPage = queryParams.perPage ? parseInt(queryParams.perPage, 10) : 1000;
-    const sort = queryParams.sort;
+            const limit = perPage ? parseInt(perPage) : 1000;
+            const offset = page ? parseInt(page) : 1;
+            const skip = (offset - 1) * limit;
+            const take = limit;
 
-    /**
-     * Query Parameter Logic
-     */
-    if (queryParams.id) {
+            /**
+             * Database Table call
+             */
+            const results = await AppDataSource.getRepository(RncLocus);
 
-        queryConditions.push('rl.id = $1');
+            /**
+             * User Roles Checker
+             */
+            const user = await (userRole && permissions[userRole]);
+            // console.log(user);
 
-        queryParameters.push(parseInt(queryParams.id, 10));
+            /**
+             * Database Query By Conditions On User Roles 
+             */
+            let options = {};
 
-    }
+            if (user) {
 
-    if (queryParams.assembly_id) {
+                /**
+                 * Admin User
+                 */
+                if (user.canAccessAllColumns && user.canUseSideloading && !user.allowedRegionId) {
 
-        queryConditions.push('rl.assembly_id = $' + (queryParameters.length + 1));
+                    options = {
+                        relations: sideloading === 'locusMembers' && ['locus_members'],
+                        skip,
+                        take,
+                        where: {
+                            id: id,
+                            assembly_id: assembly_id,
+                            locus_members: {
+                                region_id: region_id,
+                                membership_status: membership_status
+                            }
+                        },
+                        order: orderBy
+                    }
 
-        queryParameters.push(queryParams.assembly_id);
+                }
 
-    }
+                /**
+                 * Normal User
+                 */
+                else if (!user.canAccessAllColumns && !user.canUseSideloading) {
 
-    if (queryParams.region_id && queryParams.sideloading !== 'none') {
+                    options = {
+                        skip,
+                        take,
+                        where: {
+                            id: id,
+                            assembly_id: assembly_id
+                        },
+                        order: orderBy
+                    }
 
-        queryConditions.push('rlm.region_id = $' + (queryParameters.length + 1));
+                }
 
-        queryParameters.push(parseInt(queryParams.region_id, 10));
+                /**
+                 * Limited User
+                 */
+                else if (user.canAccessAllColumns && user.canUseSideloading && user.allowedRegionId) {
 
-    }
+                    const allowedRegions = user.allowedRegionId;
+                    const regionID: string | string[] | boolean = !region_id ? allowedRegions : region_id ? allowedRegions.includes(region_id) && region_id : false;
 
-    if (queryParams.membership_status && queryParams.sideloading !== 'none') {
+                    let checkID = regionID && Array.isArray(regionID) ? In(regionID) : regionID
 
-        queryConditions.push('rlm.membership_status = $' + (queryParameters.length + 1));
+                    if (regionID !== false) {
+                        options = {
+                            relations: sideloading === 'locusMembers' && ['locus_members'],
+                            skip,
+                            take,
+                            where: {
+                                id: id,
+                                assembly_id: assembly_id,
+                                locus_members: {
+                                    region_id: checkID,
+                                    membership_status: membership_status
+                                }
+                            },
+                            order: orderBy
+                        }
+                    } else {
 
-        queryParameters.push(queryParams.membership_status);
+                        return false;
+                    }
 
-    }
+                }
 
-    /**
-     * Apply data visibility condition based on user's role
-     */
-    if (queryParams.userRole === 'admin') {
+                /**
+                 * Find Table Instance
+                 */
+                const data = await results.find(options);
 
-        if (!queryParams.sideloading) {
-
-            queryParams.sideloading = 'locusMembers';
-
-        }
-
-    } else if (queryParams.userRole === 'normal') {
-
-        if (queryParams.sideloading !== "locusMembers") {
-
-            queryParams.sideloading = 'none';
-
-        }
-        else {
-
-            console.log('Access denied');
-
-            db.$pool.end();
-
-            return false;
-        }
-
-    } else if (queryParams.userRole === 'limited') {
-
-        const validRegionIds = ['86118093', '86696489', '88186467'];
-
-        if (queryParams.sideloading == "locusMembers") {
-
-            if (queryParams.region_id && !validRegionIds.includes(queryParams.region_id)) {
-
-                console.log('Access denied');
-
-                db.$pool.end();
-
-                return false;
+                return data;
 
             } else {
-
-                queryConditions.push("rlm.region_id IN ('86118093','86696489','88186467')");
-
+                return false;
             }
+
+        } catch (error) {
+
+            console.error('Error in getLocusData:', error);
+            throw error;
+
         }
-        else {
+    } else {
 
-            console.log('Access denied');
+        return "Database is trying to be connected!"
 
-            db.$pool.end();
-
-            return false;
-        }
-    }
-
-
-    /**
-     * Condition on Sql based on Query
-     */
-    const whereClause = queryConditions.length > 0 ? 'WHERE ' + queryConditions.join(' AND ') : '';
-
-    /**
-     * SQL Schema
-     */
-    let sql = `
-        SELECT rl.*${queryParams.sideloading === 'locusMembers' ? ', rlm.*' : ''}
-        FROM rnc_locus rl
-        ${queryParams.sideloading === 'locusMembers' ? 'LEFT JOIN rnc_locus_members rlm ON rlm.locus_id = rl.id' : ''}
-        ${whereClause}    
-    `;
-
-    /**
-     * Sorting by column_name
-     */
-    if (sort == 'asc') {
-        sql += ` ORDER BY rl.id ASC`;
-    }
-    else if (sort == 'desc') {
-        sql += ` ORDER BY rl.id DESC`;
-    }
-    else if (sort) {
-        sql += ` ORDER BY ${sort}`;
-    }
-
-    /**
-     * Pagination and Offset Logic
-     */
-    const offset = (page - 1) * perPage;
-    sql += ` OFFSET $${queryParameters.length + 1} LIMIT $${queryParameters.length + 2}`
-    queryParameters.push(offset, perPage);
-
-
-
-    /**
-     * Retrieve data from database
-     */
-    try {
-
-        db.connect({ direct: true });
-
-        const data = await db.any(sql, [...queryParameters, 5]);
-
-        db.$pool.end();
-
-        return data;
-
-    } catch (error) {
-
-        console.error('Error in getLocusData:', error);
-
-        db.$pool.end();
-
-        throw error;
     }
 };
-
-export default getLocusData;

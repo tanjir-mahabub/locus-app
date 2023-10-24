@@ -45,14 +45,25 @@ const router = Router();
  *         schema:
  *           type: string
  *           default: member
- *            
- *       - name: sort
- *         in: query         
- *         description: Sort order (Optional)
+ *                   
+ *       - name: orderBy
+ *         in: query
  *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           x-parser: case-insensitive
+ *           type: object
+ *           properties:
+ *              orderBy:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: string
+ *                    enum: [ASC, DSC]             
+ *                  assembly_id:
+ *                    type: string
+ *                    enum: [ASC, DSC]   
+ *                  chromosome:
+ *                    type: string
+ *                    enum: [ASC, DSC]    
+ *                  
  * 
  *       - name: page
  *         in: query         
@@ -71,6 +82,7 @@ const router = Router();
  *     responses:
  *       '200':
  *         description: Successful response
+ *         
  *       '403':
  *         description: Access denied
  */

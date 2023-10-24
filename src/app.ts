@@ -6,10 +6,9 @@ import swaggerSpec from './config/swagger';
 import router from './routes/locusRoutes';
 import jwt from 'jsonwebtoken';
 import { users } from './models/userModel';
-
-
-import "reflect-metadata"
 import path from 'path';
+import AppDataSource from './config/typeORM';
+import "reflect-metadata"
 
 /**
  * Environment Variable Initialize
@@ -24,8 +23,7 @@ const secret = process.env.JWT_SECRET;
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-app.use(express.static(path.join(__dirname, 'views')));
+// app.use(express.static(path.join(__dirname, 'views')));
 
 /**
  * Serve Swagger documentation
@@ -34,28 +32,33 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', router);
 
 app.get('/', (req, res) => {
+
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
+
 });
 
 /**
  * Protected Login Route
  */
 app.post('/login', (req, res) => {
-    // Extract username and password from the request body
+
     const { username, password } = req.body;
 
-    // Find the user by username
     const user = users.find((u) => u.username === username);
 
+    /**
+     * Check the user
+     */
     if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check the password
+    /**
+     * Check the password
+     */
     if (password !== user.password) {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
-
 
     if (!secret) return false;
 
@@ -70,6 +73,20 @@ app.post('/login', (req, res) => {
 
     res.json({ token });
 });
+
+/**
+ * Error Page Route
+ */
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+});
+
+/**
+ * Database Initialization
+ */
+AppDataSource.initialize()
+    .then(() => console.log('🌐 Database Connected Successfully'))
+    .catch((err) => console.log('⛔ Database connection error'));
 
 /**
  * Express Application Expose Port
