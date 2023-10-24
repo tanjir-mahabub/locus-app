@@ -38,12 +38,13 @@ const locusController = async (req: AuthenticatedRequest, res: Response): Promis
          * Requested Query Variables
          */
         const { id, assembly_id, region_id, membership_status, sideloading, page, perPage, orderBy } = await req.query as RequestQuery;
-        const userRole = req.user?.role;
 
         /**
          * JWT Token Verification
-         */
+        */
         verifyToken(req, res, async () => {
+
+            const userRole = req.user?.role;
 
             /**
              * Call Data By User Role Permissions Checking

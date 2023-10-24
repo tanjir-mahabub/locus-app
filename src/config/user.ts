@@ -16,12 +16,12 @@ export const permissions: Permission = {
     admin: {
         canAccessAllColumns: true,
         canUseSideloading: true,
-        allowedRegionId: []
+        allowedRegionId: undefined
     },
     normal: {
         canAccessAllColumns: false,
         canUseSideloading: false,
-        allowedRegionId: []
+        allowedRegionId: undefined
     },
     limited: {
         canAccessAllColumns: true,

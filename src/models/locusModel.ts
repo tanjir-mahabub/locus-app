@@ -96,7 +96,7 @@ export const getLocusData = async (queryParams: RequestQuery, permissions: Permi
 
                     if (regionID !== false) {
                         options = {
-                            relations: ['locus_members'],
+                            relations: sideloading === 'locusMembers' && ['locus_members'],
                             skip,
                             take,
                             where: {

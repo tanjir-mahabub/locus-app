@@ -13,11 +13,4 @@ const AppDataSource = new DataSource({
     logging: false
 });
 
-/**
- * Database Initialization
- */
-AppDataSource.initialize()
-    .then(() => console.log('Database Connected Successfully'))
-    .catch((err) => console.log('Database connected error'));
-
 export default AppDataSource;

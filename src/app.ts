@@ -6,12 +6,9 @@ import swaggerSpec from './config/swagger';
 import router from './routes/locusRoutes';
 import jwt from 'jsonwebtoken';
 import { users } from './models/userModel';
-
-
-import "reflect-metadata"
 import path from 'path';
 import AppDataSource from './config/typeORM';
-import { RncLocus } from './entities/rncLocus';
+import "reflect-metadata"
 
 /**
  * Environment Variable Initialize
@@ -44,21 +41,24 @@ app.get('/', (req, res) => {
  * Protected Login Route
  */
 app.post('/login', (req, res) => {
-    // Extract username and password from the request body
+
     const { username, password } = req.body;
 
-    // Find the user by username
     const user = users.find((u) => u.username === username);
 
+    /**
+     * Check the user
+     */
     if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check the password
+    /**
+     * Check the password
+     */
     if (password !== user.password) {
         return res.status(401).json({ message: 'Invalid credentials' });
     }
-
 
     if (!secret) return false;
 
@@ -73,6 +73,13 @@ app.post('/login', (req, res) => {
 
     res.json({ token });
 });
+
+/**
+ * Database Initialization
+ */
+AppDataSource.initialize()
+    .then(() => console.log('🌐 Database Connected Successfully'))
+    .catch((err) => console.log('⛔ Database connection error'));
 
 /**
  * Express Application Expose Port
