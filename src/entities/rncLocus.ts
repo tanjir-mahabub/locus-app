@@ -1,6 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { RncLocusMembers } from './rncLocusMember';
 
+/**
+ * RNC Locus Data TypeORM Entity
+ */
 @Entity({ name: 'rnc_locus', schema: 'rnacen' })
 export class RncLocus {
     @PrimaryGeneratedColumn()

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { IUser, users } from '../models/userModel';
+import { users } from '../models/userModel';
 
 /**
  * Admin User Authorization

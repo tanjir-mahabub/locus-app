@@ -1,13 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { RncLocus } from './rncLocus';
 
+/**
+ * RNC Locus Members Data TypeORM Entity
+ */
 @Entity({ name: 'rnc_locus_members', schema: 'rnacen' })
 export class RncLocusMembers {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
-    region_id: number;
+    region_id: string;
 
     @Column()
     locus_id: number;
