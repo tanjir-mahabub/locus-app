@@ -14,7 +14,8 @@
         "types": [
             "node",
             "jest",
-            "supertest"
+            "supertest",
+            "puppeteer"
         ],
     },
     "include": [
