@@ -5,7 +5,7 @@
 
 ## Description
 
-Locus-App is an app which provide 3rd party postgre data through jwt authentication for 3 predefined users such as admin, normal, limited. Technologies have been used for this app such as express.js, typescript, swagger, typeorm, jwt, etc.
+Locus-App is an application that provides access to 3rd-party PostgreSQL data through JWT authentication for three predefined user roles: admin, normal, and limited. This application is built using technologies such as Express.js, TypeScript, Swagger, TypeORM, and JWT.
 
 ## Features
 
